@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gender Bias in AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@700;800&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07070e;--surface:#0d0d18;--card:#111120;--border:rgba(255,255,255,0.07);--accent:#bf3cff;--accent2:#ff3c7e;--accent3:#3cc8ff;--text:#ddddf0;--muted:#7070a0;--white:#ffffff;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:16px;line-height:1.7;overflow-x:hidden;}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1rem 3rem;background:rgba(7,7,14,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);}
+.nav-logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.3rem;letter-spacing:0.06em;text-transform:uppercase;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.nav-right{display:flex;align-items:center;gap:2rem;}
+.nav-links{display:flex;gap:1.8rem;list-style:none;}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:0.78rem;letter-spacing:0.1em;text-transform:uppercase;transition:color 0.2s;position:relative;}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:1.5px;background:linear-gradient(90deg,var(--accent),var(--accent2));transform:scaleX(0);transform-origin:left;transition:transform 0.25s ease;}
+.nav-links a:hover{color:var(--white);}
+.nav-links a.active{color:var(--white);}
+.nav-links a.active::after{transform:scaleX(1);}
+.lang-toggle{display:flex;align-items:center;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:2rem;padding:0.2rem;gap:0.2rem;}
+.lang-btn{padding:0.3rem 0.85rem;border-radius:2rem;border:none;background:transparent;color:var(--muted);font-family:'Outfit',sans-serif;font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.25s;letter-spacing:0.05em;}
+.lang-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;}
+
+#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:8rem 2rem 4rem;position:relative;overflow:hidden;}
+.orbs{position:absolute;inset:0;pointer-events:none;}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);animation:orbFloat 8s ease-in-out infinite;}
+.orb1{width:600px;height:600px;background:rgba(191,60,255,0.14);top:-15%;left:-10%;animation-delay:0s;}
+.orb2{width:450px;height:450px;background:rgba(255,60,126,0.11);bottom:-10%;right:-5%;animation-delay:-3s;}
+.orb3{width:350px;height:350px;background:rgba(60,200,255,0.07);top:45%;left:50%;transform:translate(-50%,-50%);animation-delay:-6s;}
+.grid-lines{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,0.022) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.022) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 0%,transparent 100%);}
+
+.hero-tag{display:inline-flex;align-items:center;align-self:center;gap:0.6rem;border:1px solid rgba(191,60,255,0.35);color:var(--accent);font-size:0.72rem;letter-spacing:0.18em;text-transform:uppercase;padding:0.4rem 1.1rem;border-radius:2rem;margin-bottom:2.5rem;background:rgba(191,60,255,0.06);animation:fadeUp 0.7s ease both;text-decoration:none;transition:background 0.2s,border-color 0.2s;}
+.hero-tag:hover{background:rgba(191,60,255,0.14);border-color:rgba(191,60,255,0.6);}
+.hero-tag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s ease infinite;}
+.hero-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(5rem,15vw,13rem);line-height:0.88;letter-spacing:0.01em;text-transform:uppercase;animation:fadeUp 0.7s 0.1s ease both;}
+.hero-title .w1{color:var(--white);display:block;}
+.hero-title .w2{display:block;background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 50%,var(--accent3) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200%;animation:gradShift 4s ease infinite;}
+body.zh .hero-title{line-height:1.15;font-size:clamp(4rem,12vw,10rem);}
+body.zh .hero-title .w1{letter-spacing:0.02em;}
+.src-link{display:inline-flex;align-items:center;gap:0.3rem;margin-top:0.8rem;font-size:0.72rem;color:var(--accent3);text-decoration:none;opacity:0.85;border-bottom:1px solid rgba(60,200,255,0.3);padding-bottom:1px;transition:opacity 0.2s;}
+.src-link:hover{opacity:1;}
+.hero-sub{max-width:520px;margin:2rem auto 0;color:var(--muted);font-size:1rem;animation:fadeUp 0.7s 0.2s ease both;}
+.hero-meta{margin-top:2.5rem;display:flex;align-items:center;gap:1.5rem;animation:fadeUp 0.7s 0.3s ease both;flex-wrap:wrap;justify-content:center;}
+.sdg-badge{background:#e5243b;color:white;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;padding:0.45rem 1rem;border-radius:0.4rem;letter-spacing:0.08em;text-transform:uppercase;}
+.hero-scroll{display:flex;flex-direction:column;align-items:center;gap:0.5rem;margin-top:3rem;color:var(--muted);font-size:0.68rem;letter-spacing:0.18em;text-transform:uppercase;}
+.scroll-bar{width:1px;height:50px;background:rgba(191,60,255,0.2);position:relative;flex-shrink:0;}
+.scroll-bar::after{content:'';position:absolute;top:0;left:-1.5px;width:4px;height:12px;border-radius:2px;background:linear-gradient(to bottom,var(--accent),var(--accent2));animation:scrollDot 1.8s ease-in-out infinite;}
+.scroll-label{white-space:nowrap;}
+@keyframes scrollDot{0%{top:0;opacity:1;}80%{top:38px;opacity:0.2;}100%{top:0;opacity:0;}}
+
+section{padding:6rem 2rem;}
+.container{max-width:1140px;margin:0 auto;}
+.sec-label{font-size:0.7rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;display:flex;align-items:center;gap:0.7rem;}
+.sec-label::before{content:'';width:24px;height:1px;background:var(--accent);}
+.sec-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(2.8rem,6vw,5.5rem);line-height:0.9;letter-spacing:0.01em;text-transform:uppercase;color:var(--white);margin-bottom:1.5rem;}
+body.zh .sec-title{line-height:1.15;font-size:clamp(2.2rem,5vw,4.5rem);letter-spacing:0.02em;}
+.sec-body{color:var(--muted);font-size:0.95rem;max-width:600px;line-height:1.85;}
+.divider{width:100%;height:1px;background:var(--border);}
+
+#intro{background:var(--surface);}
+.intro-layout{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start;margin-top:3.5rem;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:1.2rem;padding:1.6rem;transition:transform 0.3s,border-color 0.3s;}
+.stat-card:hover{transform:translateY(-4px);border-color:rgba(191,60,255,0.3);}
+.stat-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.8rem;line-height:1;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.stat-desc{color:var(--muted);font-size:0.82rem;margin-top:0.4rem;line-height:1.5;}
+
+#examples{background:var(--bg);}
+.ex-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:3rem;}
+.flip-card{height:280px;perspective:1000px;cursor:pointer;}
+.flip-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform 0.65s cubic-bezier(0.23,1,0.32,1);}
+.flip-card:hover .flip-inner,.flip-card.flipped .flip-inner{transform:rotateY(180deg);}
+.flip-front,.flip-back{position:absolute;inset:0;border-radius:1.4rem;padding:1.8rem;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1px solid var(--border);}
+.flip-front{background:var(--card);display:flex;flex-direction:column;justify-content:flex-end;transition:border-color 0.3s;}
+.flip-card:hover .flip-front{border-color:rgba(191,60,255,0.3);}
+.flip-back{background:linear-gradient(135deg,#180a2e 0%,#0a1428 100%);border-color:rgba(191,60,255,0.25);transform:rotateY(180deg);display:flex;flex-direction:column;justify-content:center;gap:0.7rem;}
+.card-icon{font-size:2.2rem;margin-bottom:0.8rem;}
+.card-tag{display:inline-block;font-size:0.62rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(191,60,255,0.3);border-radius:2rem;padding:0.22rem 0.7rem;margin-bottom:0.4rem;width:fit-content;}
+.card-title{font-family:'Barlow',sans-serif;font-weight:800;font-size:1.05rem;color:var(--white);}
+.flip-hint{font-size:0.68rem;color:var(--muted);margin-top:0.4rem;}
+.flip-back p{color:var(--muted);font-size:0.85rem;line-height:1.75;}
+
+#causes{background:var(--surface);}
+.causes-list{margin-top:3rem;}
+.cause-item{display:grid;grid-template-columns:90px 1fr;gap:2rem;align-items:start;padding:2rem 0;border-bottom:1px solid var(--border);position:relative;overflow:hidden;transition:background 0.2s;}
+.cause-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--accent),var(--accent2));transform:scaleY(0);transform-origin:top;transition:transform 0.4s ease;}
+.cause-item:hover::before{transform:scaleY(1);}
+.cause-item:hover{background:rgba(191,60,255,0.025);}
+.cause-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:4rem;line-height:1;color:rgba(191,60,255,0.12);transition:color 0.3s;padding-left:1.5rem;}
+.cause-item:hover .cause-num{color:rgba(191,60,255,0.4);}
+.cause-title{font-family:'Barlow',sans-serif;font-weight:800;font-size:1.05rem;color:var(--white);margin-bottom:0.5rem;}
+.cause-body{color:var(--muted);font-size:0.88rem;line-height:1.8;}
+
+#impact{background:var(--bg);}
+.impact-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:3rem;}
+.impact-card{background:var(--card);border:1px solid var(--border);border-radius:1.4rem;padding:2rem;position:relative;overflow:hidden;transition:transform 0.3s,border-color 0.3s;}
+.impact-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transform:scaleX(0);transform-origin:left;transition:transform 0.4s ease;}
+.impact-card:hover{transform:translateY(-6px);border-color:rgba(191,60,255,0.25);}
+.impact-card:hover::before{transform:scaleX(1);}
+.impact-card.wide{grid-column:span 2;}
+.impact-icon{font-size:1.8rem;margin-bottom:1rem;}
+.impact-title{font-family:'Barlow',sans-serif;font-weight:800;font-size:1rem;color:var(--white);margin-bottom:0.6rem;}
+.impact-body{color:var(--muted);font-size:0.87rem;line-height:1.8;}
+
+#quiz{background:var(--surface);}
+.quiz-wrap{max-width:680px;margin:3rem auto 0;}
+.quiz-shell{background:var(--card);border:1px solid var(--border);border-radius:1.6rem;padding:2.5rem;position:relative;overflow:hidden;}
+.quiz-shell::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(191,60,255,0.15),transparent 70%);pointer-events:none;}
+.quiz-prog{display:flex;gap:0.5rem;margin-bottom:2rem;}
+.quiz-dot{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background 0.4s;}
+.quiz-dot.done{background:rgba(191,60,255,0.4);}
+.quiz-dot.active{background:var(--accent);}
+.quiz-q{font-family:'Barlow',sans-serif;font-weight:800;font-size:1.1rem;color:var(--white);margin-bottom:1.5rem;line-height:1.45;}
+.quiz-opts{display:flex;flex-direction:column;gap:0.7rem;}
+.quiz-opt{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:0.8rem;padding:0.9rem 1.1rem;color:var(--text);font-size:0.88rem;cursor:pointer;text-align:left;display:flex;align-items:center;transition:border-color 0.2s,background 0.2s;font-family:'Outfit',sans-serif;}
+.quiz-opt:hover:not(:disabled){border-color:rgba(191,60,255,0.4);background:rgba(191,60,255,0.06);}
+.opt-label{display:inline-block;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;border-radius:0.3rem;background:rgba(255,255,255,0.07);font-family:'Barlow',sans-serif;font-weight:800;font-size:0.75rem;margin-right:0.7rem;flex-shrink:0;}
+.quiz-opt.correct .opt-label{background:rgba(61,220,132,0.2);}
+.quiz-opt.wrong .opt-label{background:rgba(255,60,126,0.2);}
+.quiz-opt.correct{border-color:#3ddc84;background:rgba(61,220,132,0.08);color:#3ddc84;}
+.quiz-opt.wrong{border-color:var(--accent2);background:rgba(255,60,126,0.08);color:var(--accent2);}
+.quiz-fb{margin-top:1.1rem;padding:0.9rem 1.1rem;border-radius:0.8rem;font-size:0.86rem;display:none;line-height:1.6;}
+.quiz-fb.show{display:block;}
+.quiz-fb.ok{background:rgba(61,220,132,0.07);border:1px solid rgba(61,220,132,0.25);color:#3ddc84;}
+.quiz-fb.no{background:rgba(255,60,126,0.07);border:1px solid rgba(255,60,126,0.25);color:var(--accent2);}
+.quiz-next{margin-top:1.4rem;background:linear-gradient(90deg,var(--accent),var(--accent2));color:white;border:none;border-radius:0.8rem;padding:0.8rem 1.8rem;font-family:'Barlow',sans-serif;font-weight:800;font-size:0.9rem;cursor:pointer;display:none;transition:opacity 0.2s;letter-spacing:0.04em;}
+.quiz-next:hover{opacity:0.85;}
+.quiz-next.show{display:inline-block;}
+.quiz-result{text-align:center;display:none;}
+.quiz-result.show{display:block;}
+.result-score{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:6rem;line-height:1;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.result-msg{color:var(--muted);margin-top:0.5rem;font-size:0.95rem;}
+.quiz-restart{margin-top:1.5rem;border:1px solid rgba(191,60,255,0.4);color:var(--accent);background:transparent;border-radius:0.8rem;padding:0.7rem 1.8rem;font-family:'Barlow',sans-serif;font-weight:800;font-size:0.88rem;cursor:pointer;transition:background 0.2s;}
+.quiz-restart:hover{background:rgba(191,60,255,0.08);}
+
+#solutions{background:var(--bg);}
+.sol-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin-top:3rem;}
+.sol-card{background:var(--card);border:1px solid var(--border);border-radius:1.4rem;padding:2rem;position:relative;transition:transform 0.3s,border-color 0.3s;}
+.sol-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;border-radius:0 0 1.4rem 1.4rem;background:linear-gradient(90deg,var(--accent3),var(--accent));transform:scaleX(0);transform-origin:left;transition:transform 0.4s ease;}
+.sol-card:hover{transform:translateY(-6px);border-color:rgba(60,200,255,0.25);}
+.sol-card:hover::after{transform:scaleX(1);}
+.sol-icon{font-size:1.8rem;margin-bottom:1rem;}
+.sol-title{font-family:'Barlow',sans-serif;font-weight:800;font-size:1rem;color:var(--white);margin-bottom:0.6rem;}
+.sol-body{color:var(--muted);font-size:0.87rem;line-height:1.8;}
+
+footer{background:var(--surface);border-top:1px solid var(--border);padding:3rem 2rem;text-align:center;}
+.footer-logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:1.6rem;letter-spacing:0.06em;text-transform:uppercase;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem;}
+footer p{color:var(--muted);font-size:0.85rem;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+@keyframes scrollPulse{0%,100%{opacity:1;}50%{opacity:0.2;}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(0.7);}}
+@keyframes orbFloat{0%,100%{transform:translate(0,0);}33%{transform:translate(30px,-20px);}66%{transform:translate(-20px,15px);}}
+@keyframes gradShift{0%,100%{background-position:0% 50%;}50%{background-position:100% 50%;}}
+
+.reveal{opacity:0;transform:translateY(28px);transition:opacity 0.65s ease,transform 0.65s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+
+/* COUNT-UP */
+.stat-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:2.8rem;line-height:1;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;transition:all 0.3s;}
+
+/* IMPACT EXPAND */
+.impact-card{cursor:pointer;}
+.impact-card .impact-extra{max-height:0;overflow:hidden;transition:max-height 0.45s ease,opacity 0.3s ease;opacity:0;font-size:0.84rem;color:var(--muted);line-height:1.75;margin-top:0;}
+.impact-card.open .impact-extra{max-height:200px;opacity:1;margin-top:0.8rem;}
+.impact-card .expand-hint{font-size:0.68rem;color:rgba(191,60,255,0.5);letter-spacing:0.08em;margin-top:0.6rem;transition:color 0.2s;}
+.impact-card:hover .expand-hint{color:var(--accent);}
+.impact-card.open .expand-hint{color:var(--accent);}
+
+/* EXPERIMENT */
+#experiment{background:var(--surface);}
+.exp-wrap{max-width:860px;margin:3rem auto 0;}
+.exp-prompts{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem;}
+.prompt-chip{background:var(--card);border:1.5px solid var(--border);border-radius:1rem;padding:1.2rem;cursor:pointer;transition:all 0.25s;text-align:center;}
+.prompt-chip:hover{border-color:rgba(191,60,255,0.5);transform:translateY(-3px);}
+.prompt-chip.selected{border-color:var(--accent);background:rgba(191,60,255,0.08);}
+.prompt-chip .p-emoji{font-size:2rem;display:block;margin-bottom:0.5rem;}
+.prompt-chip .p-label{font-family:'Barlow',sans-serif;font-weight:800;font-size:0.95rem;color:var(--white);}
+.prompt-chip .p-sub{font-size:0.78rem;color:var(--muted);margin-top:0.2rem;}
+.exp-step{background:var(--card);border:1px solid var(--border);border-radius:1.4rem;padding:2rem;margin-bottom:1rem;display:none;}
+.exp-step.active{display:block;}
+.step-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:0.75rem;letter-spacing:0.15em;color:var(--accent);text-transform:uppercase;margin-bottom:0.5rem;}
+.step-title{font-family:'Barlow',sans-serif;font-weight:800;font-size:1.1rem;color:var(--white);margin-bottom:0.8rem;}
+.prompt-box{background:rgba(191,60,255,0.07);border:1px dashed rgba(191,60,255,0.4);border-radius:0.8rem;padding:1rem 1.2rem;font-family:'Outfit',sans-serif;font-size:1rem;color:var(--white);display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1rem;}
+.copy-btn{background:rgba(191,60,255,0.2);border:none;border-radius:0.5rem;padding:0.4rem 0.9rem;color:var(--accent);font-family:'Barlow',sans-serif;font-weight:700;font-size:0.78rem;cursor:pointer;white-space:nowrap;transition:background 0.2s;}
+.copy-btn:hover{background:rgba(191,60,255,0.35);}
+.ai-links{display:flex;gap:0.7rem;flex-wrap:wrap;margin-top:0.8rem;}
+.ai-link{display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.9rem;border:1px solid var(--border);border-radius:2rem;font-size:0.78rem;color:var(--muted);text-decoration:none;transition:all 0.2s;}
+.ai-link:hover{border-color:rgba(191,60,255,0.4);color:var(--white);}
+.upload-zone{border:2px dashed rgba(191,60,255,0.3);border-radius:1rem;padding:2.5rem;text-align:center;cursor:pointer;transition:all 0.25s;position:relative;}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:rgba(191,60,255,0.05);}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.upload-icon{font-size:2.5rem;margin-bottom:0.8rem;}
+.upload-text{color:var(--muted);font-size:0.9rem;}
+.upload-preview{width:100%;max-height:280px;object-fit:contain;border-radius:0.8rem;display:none;margin-bottom:1rem;}
+.classify-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:0.8rem;margin-top:1rem;}
+.cls-btn{background:rgba(255,255,255,0.03);border:1.5px solid var(--border);border-radius:0.8rem;padding:1rem;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;}
+.cls-btn:hover{border-color:rgba(191,60,255,0.5);background:rgba(191,60,255,0.06);}
+.cls-btn .cls-emoji{font-size:1.5rem;display:block;margin-bottom:0.4rem;}
+.cls-btn .cls-label{font-size:0.88rem;color:var(--text);}
+/* results */
+.exp-results{margin-top:1.5rem;}
+.res-bar-group{margin-bottom:1rem;}
+.res-bar-header{display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.88rem;color:var(--text);}
+.res-track{height:10px;background:rgba(255,255,255,0.07);border-radius:5px;overflow:hidden;}
+.res-fill{height:100%;border-radius:5px;width:0;transition:width 0.9s cubic-bezier(0.23,1,0.32,1);}
+.res-fill.male{background:linear-gradient(90deg,#3cc8ff,#3c8fff);}
+.res-fill.female{background:linear-gradient(90deg,var(--accent),var(--accent2));}
+.res-fill.neutral{background:linear-gradient(90deg,#3ddc84,#3ddc60);}
+.res-insight{margin-top:1.2rem;padding:1rem 1.2rem;background:rgba(191,60,255,0.07);border:1px solid rgba(191,60,255,0.2);border-radius:0.8rem;font-size:0.88rem;color:var(--text);line-height:1.7;}
+.exp-next-btn{margin-top:1rem;background:linear-gradient(90deg,var(--accent),var(--accent2));color:white;border:none;border-radius:0.8rem;padding:0.8rem 1.8rem;font-family:'Barlow',sans-serif;font-weight:800;font-size:0.9rem;cursor:pointer;transition:opacity 0.2s;}
+.exp-next-btn:hover{opacity:0.85;}
+
+
+/* LANG */
+body.zh [data-en]{display:none!important;}
+body.zh [data-zh]{display:block!important;}
+body:not(.zh) [data-zh]{display:none!important;}
+body:not(.zh) [data-en]{display:block!important;}
+[data-zh]{display:none;}
+span[data-en],span[data-zh]{display:inline!important;}
+body.zh span[data-en]{display:none!important;}
+body:not(.zh) span[data-zh]{display:none!important;}
+
+@media(max-width:900px){nav{padding:1rem 1.5rem;}.nav-links{display:none;}.intro-layout,.ex-grid,.sol-grid{grid-template-columns:1fr;}.impact-grid{grid-template-columns:1fr 1fr;}.impact-card.wide{grid-column:span 2;}}
+@media(max-width:600px){.impact-grid{grid-template-columns:1fr;}.impact-card.wide{grid-column:span 1;}.cause-item{grid-template-columns:60px 1fr;}.cause-num{font-size:2.5rem;padding-left:0.5rem;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">Gender Bias in AI</div>
+  <div class="nav-right">
+    <ul class="nav-links">
+      <li><a href="#intro"><span data-en>Intro</span><span data-zh>簡介</span></a></li>
+      <li><a href="#examples"><span data-en>Examples</span><span data-zh>案例</span></a></li>
+      <li><a href="#causes"><span data-en>Causes</span><span data-zh>原因</span></a></li>
+      <li><a href="#impact"><span data-en>Impact</span><span data-zh>影響</span></a></li>
+      <li><a href="#experiment"><span data-en>Try It</span><span data-zh>試試看</span></a></li><li><a href="#quiz"><span data-en>Quiz</span><span data-zh>測驗</span></a></li>
+      <li><a href="#solutions"><span data-en>Solutions</span><span data-zh>解方</span></a></li>
+    </ul>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btnEn" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" id="btnZh" onclick="setLang('zh')">中文</button>
+    </div>
+  </div>
+</nav>
+
+<section id="hero">
+  <div class="orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+  <div class="grid-lines"></div>
+  <a class="hero-tag" href="https://sdgs.un.org/goals/goal5" target="_blank" rel="noopener"><span data-en>SDG 5 · Gender Equality ↗</span><span data-zh>SDG 5 · 性別平等 ↗</span></a>
+  <h1 class="hero-title">
+    <span class="w1" data-en>Gender<br>Bias in</span>
+    <span class="w1" data-zh>AI 中的</span>
+    <span class="w2" data-en>AI</span>
+    <span class="w2" data-zh>性別偏見</span>
+  </h1>
+  <p class="hero-sub" data-en>Exploring how artificial intelligence can unintentionally reinforce gender inequality — and what we can do about it.</p>
+  <p class="hero-sub" data-zh>探討人工智慧如何在無意間強化性別不平等，以及我們能做些什麼。</p>
+  <div class="hero-scroll"><div class="scroll-bar"></div><span class="scroll-label" data-en>Scroll</span><span class="scroll-label" data-zh>滾動</span></div>
+</section>
+
+<div class="divider"></div>
+
+<section id="intro">
+  <div class="container">
+    <div class="sec-label reveal"><span data-en>Introduction</span><span data-zh>簡介</span></div>
+    <h2 class="sec-title reveal" data-en>What is<br>AI Gender Bias?</h2>
+    <h2 class="sec-title reveal" data-zh>什麼是<br>AI 性別偏見？</h2>
+    <div class="intro-layout">
+      <div>
+        <p class="sec-body reveal" data-en>AI systems learn from vast amounts of human-generated data. When that data reflects historical gender inequalities, AI models absorb and reproduce those biases — often invisibly and at scale.</p>
+        <p class="sec-body reveal" data-zh>AI 系統從大量人類產生的資料中學習。當這些資料反映了歷史上的性別不平等，AI 模型就會吸收並重現這些偏見——往往是在無形中大規模擴散。</p>
+        <p class="sec-body reveal" style="margin-top:1rem;" data-en>This matters because AI increasingly shapes who gets hired, what content we see, and how healthcare is diagnosed. Biased AI doesn't just reflect inequality — it amplifies it.</p>
+        <p class="sec-body reveal" style="margin-top:1rem;" data-zh>這至關重要，因為 AI 越來越廣泛地影響求職、內容推薦，甚至醫療診斷。有偏見的 AI 不只反映不平等，而是放大了它。</p>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card reveal"><div class="stat-num">78%</div><div class="stat-desc" data-en>of AI researchers worldwide are male</div><div class="stat-desc" data-zh>全球 AI 研究人員為男性</div></div>
+        <div class="stat-card reveal"><div class="stat-num">44%</div><div class="stat-desc" data-en>less likely for women to be shown high-paying job ads</div><div class="stat-desc" data-zh>女性看到高薪職缺廣告的機率較低</div></div>
+        <div class="stat-card reveal"><div class="stat-num">2×</div><div class="stat-desc" data-en>higher facial recognition error rate for darker-skinned women</div><div class="stat-desc" data-zh>深膚色女性的人臉辨識錯誤率是白人男性的兩倍</div></div>
+        <div class="stat-card reveal"><div class="stat-num">2030</div><div class="stat-desc" data-en>UN target year to achieve SDG 5 gender equality</div><div class="stat-desc" data-zh>聯合國達成 SDG 5 性別平等的目標年</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="examples">
+  <div class="container">
+    <div class="sec-label reveal"><span data-en>Real-World Examples</span><span data-zh>真實案例</span></div>
+    <h2 class="sec-title reveal" data-en>AI Bias<br>in Action</h2>
+    <h2 class="sec-title reveal" data-zh>AI 偏見<br>的實例</h2>
+    <p class="sec-body reveal" data-en>Hover or tap each card to learn more about how gender bias shows up in AI systems we use every day.</p>
+    <p class="sec-body reveal" data-zh>將滑鼠移至卡片上，或點擊翻轉，了解性別偏見如何出現在日常 AI 中。</p>
+    <div class="ex-grid">
+
+      <div class="flip-card reveal"><div class="flip-inner">
+        <div class="flip-front"><div class="card-icon">🤖</div><div class="card-tag" data-en>Image Generation</div><div class="card-tag" data-zh>圖像生成</div><div class="card-title" data-en>AI Image Stereotypes</div><div class="card-title" data-zh>AI 圖像中的刻板印象</div><div class="flip-hint" data-en>Hover to flip ↻</div><div class="flip-hint" data-zh>移入翻轉查看 ↻</div></div>
+        <div class="flip-back"><div class="card-tag" data-en>Example</div><div class="card-tag" data-zh>案例</div><p data-en>Ask AI to draw a "doctor" — you'll almost always get a man. Ask for a "nurse" — almost always a woman. Nobody programmed this in. The AI just learned it from us.</p><p data-zh>叫 AI 畫「醫生」——幾乎一定是男的。叫它畫「護士」——幾乎一定是女的。沒有人這樣設計它，AI 只是從我們身上學到了這些。</p><a class="src-link" href="https://arxiv.org/abs/2302.10893" target="_blank">↗ <span data-en>Bianchi et al., 2023 (arXiv)</span><span data-zh>Bianchi 等人，2023（arXiv）</span></a></div>
+      </div></div>
+
+      <div class="flip-card reveal"><div class="flip-inner">
+        <div class="flip-front"><div class="card-icon">💼</div><div class="card-tag" data-en>Hiring & Recruitment</div><div class="card-tag" data-zh>招募與求職</div><div class="card-title" data-en>Amazon's Biased Résumé Tool</div><div class="card-title" data-zh>亞馬遜的偏頗履歷篩選</div><div class="flip-hint" data-en>Hover to flip ↻</div><div class="flip-hint" data-zh>移入翻轉查看 ↻</div></div>
+        <div class="flip-back"><div class="card-tag" data-en>Case Study</div><div class="card-tag" data-zh>深度案例</div><p data-en>Amazon built an AI to find the best candidates. The AI decided women weren't it. It penalized résumés that said "women's" anything. Amazon quietly killed the project in 2018.</p><p data-zh>亞馬遜建了一個 AI 來找最佳人才，結果它認為女性不符合條件——只要履歷上有「女性」相關詞彙，就會被自動扣分。這個工具在 2018 年被悄悄下架了。</p><a class="src-link" href="https://www.reuters.com/article/us-amazon-com-jobs-automation-insight-idUSKCN1MK08G" target="_blank">↗ <span data-en>Reuters, 2018</span><span data-zh>路透社，2018</span></a></div>
+      </div></div>
+
+      <div class="flip-card reveal"><div class="flip-inner">
+        <div class="flip-front"><div class="card-icon">🎯</div><div class="card-tag" data-en>Advertising</div><div class="card-tag" data-zh>廣告投放</div><div class="card-title" data-en>Gendered Ad Targeting</div><div class="card-title" data-zh>廣告的性別定向</div><div class="flip-hint" data-en>Hover to flip ↻</div><div class="flip-hint" data-zh>移入翻轉查看 ↻</div></div>
+        <div class="flip-back"><div class="card-tag" data-en>Research Finding</div><div class="card-tag" data-zh>研究發現</div><p data-en>A company posts a STEM job ad with zero gender targeting. Facebook's algorithm quietly shows it mostly to men anyway. The AI wasn't told to — it just learned that men click on these more. Mission accomplished. Bias perpetuated.</p><p data-zh>一家公司投放 STEM 職缺廣告，完全沒有設定性別條件。結果 Facebook 的演算法自動把廣告主要推給男性。AI 沒有被告知這樣做——它只是學到男性比較愛點這類廣告，然後一直這樣做下去。</p><a class="src-link" href="https://pubsonline.informs.org/doi/10.1287/mnsc.2018.3093" target="_blank">↗ <span data-en>Lambrecht & Tucker, Management Science, 2019</span><span data-zh>Lambrecht & Tucker，管理科學期刊，2019</span></a></div>
+      </div></div>
+
+      <div class="flip-card reveal"><div class="flip-inner">
+        <div class="flip-front"><div class="card-icon">🗣️</div><div class="card-tag" data-en>Voice Assistants</div><div class="card-tag" data-zh>語音助理</div><div class="card-title" data-en>Gendered AI Voices</div><div class="card-title" data-zh>AI 語音的性別預設</div><div class="flip-hint" data-en>Hover to flip ↻</div><div class="flip-hint" data-zh>移入翻轉查看 ↻</div></div>
+        <div class="flip-back"><div class="card-tag" data-en>Design Bias</div><div class="card-tag" data-zh>設計偏見</div><p data-en>Siri. Alexa. Cortana. All female by default. All designed to assist, obey, and never talk back. UNESCO called it out in 2019: we're teaching the world that the helper is a woman.</p><p data-zh>Siri、Alexa、Cortana——全部預設女聲、全部負責聽命行事。聯合國教科文組織在 2019 年點名批評：這樣的設計在告訴全世界，「助手」就是女人的工作。</p><a class="src-link" href="https://unesdoc.unesco.org/ark:/48223/pf0000367416" target="_blank">↗ <span data-en>UNESCO "I'd Blush If I Could", 2019</span><span data-zh>UNESCO 報告「我會臉紅的」，2019</span></a></div>
+      </div></div>
+
+      <div class="flip-card reveal"><div class="flip-inner">
+        <div class="flip-front"><div class="card-icon">🏥</div><div class="card-tag" data-en>Healthcare</div><div class="card-tag" data-zh>醫療健康</div><div class="card-title" data-en>Medical AI Disparities</div><div class="card-title" data-zh>醫療 AI 的診斷差距</div><div class="flip-hint" data-en>Hover to flip ↻</div><div class="flip-hint" data-zh>移入翻轉查看 ↻</div></div>
+        <div class="flip-back"><div class="card-tag" data-en>Health Impact</div><div class="card-tag" data-zh>健康影響</div><p data-en>Women having heart attacks are already more likely to be dismissed by doctors. Now the AI does it too — because it was mostly trained on male patients. A literal life-or-death consequence of biased data.</p><p data-zh>女性心臟病發作時，本來就容易被醫生忽視。現在連 AI 也這樣——因為它幾乎只用男性病患的資料訓練。這不是統計問題，這攸關生死。</p><a class="src-link" href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8674135/" target="_blank">↗ <span data-en>Seyyed-Kalantari et al., Nature Medicine, 2021</span><span data-zh>Seyyed-Kalantari 等人，自然醫學期刊，2021</span></a></div>
+      </div></div>
+
+      <div class="flip-card reveal"><div class="flip-inner">
+        <div class="flip-front"><div class="card-icon">💬</div><div class="card-tag" data-en>Language Models</div><div class="card-tag" data-zh>語言模型</div><div class="card-title" data-en>Word Embeddings & Stereotypes</div><div class="card-title" data-zh>詞向量與刻板印象</div><div class="flip-hint" data-en>Hover to flip ↻</div><div class="flip-hint" data-zh>移入翻轉查看 ↻</div></div>
+        <div class="flip-back"><div class="card-tag" data-en>NLP Research</div><div class="card-tag" data-zh>自然語言研究</div><p data-en>Feed an AI enough of the internet and it learns: man = programmer, woman = homemaker. These aren't opinions — they're patterns baked invisibly into every translation, autocomplete, and job recommendation you use.</p><p data-zh>讓 AI 讀完足夠多的網路資料，它就學到：男性＝工程師，女性＝家庭主婦。這不是偏好，是被悄悄燒進每一個翻譯、自動補全和職缺推薦裡的偏見。</p><a class="src-link" href="https://arxiv.org/abs/1607.06520" target="_blank">↗ <span data-en>Bolukbasi et al., NeurIPS, 2016</span><span data-zh>Bolukbasi 等人，NeurIPS，2016</span></a></div>
+      </div></div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="causes">
+  <div class="container">
+    <div class="sec-label reveal"><span data-en>Root Causes</span><span data-zh>根本原因</span></div>
+    <h2 class="sec-title reveal" data-en>Why Does<br>Bias Happen?</h2>
+    <h2 class="sec-title reveal" data-zh>偏見為何<br>會發生？</h2>
+    <div class="causes-list">
+      <div class="cause-item reveal"><div class="cause-num">01</div><div><div class="cause-title" data-en>Biased Training Data</div><div class="cause-title" data-zh>有偏見的訓練資料</div><div class="cause-body" data-en>AI learns from historical data generated in societies that practiced gender discrimination. Job listings, literature, and web content overrepresent men in leadership and women in caregiving — AI absorbs this as "normal."</div><div class="cause-body" data-zh>AI 從歷史資料中學習，而那些資料來自長期存在性別歧視的社會。職缺廣告、文學作品與網路內容都過度呈現「男性領導、女性照護」的模式，AI 將此視為「正常」。</div></div></div>
+      <div class="cause-item reveal"><div class="cause-num">02</div><div><div class="cause-title" data-en>Lack of Diversity in AI Teams</div><div class="cause-title" data-zh>AI 開發團隊缺乏多元性</div><div class="cause-body" data-en>The majority of AI researchers and engineers are men. Teams without gender diversity are less likely to notice or prioritize gender issues during design, testing, and deployment.</div><div class="cause-body" data-zh>AI 研究人員和工程師的絕大多數為男性。缺乏性別多元的團隊，在設計、測試與部署過程中，較不容易發現或重視性別相關問題。</div></div></div>
+      <div class="cause-item reveal"><div class="cause-num">03</div><div><div class="cause-title" data-en>Optimization Without Fairness</div><div class="cause-title" data-zh>只追求效能，忽視公平性</div><div class="cause-body" data-en>AI is optimized for accuracy or engagement — not fairness. Without explicit fairness goals, a model can achieve high overall accuracy while performing significantly worse for underrepresented groups.</div><div class="cause-body" data-zh>AI 系統通常以準確率或參與度為優化目標，而非公平性。若沒有明確的公平指標，模型可能整體表現出色，卻對弱勢群體效果明顯較差。</div></div></div>
+      <div class="cause-item reveal"><div class="cause-num">04</div><div><div class="cause-title" data-en>Self-Reinforcing Feedback Loops</div><div class="cause-title" data-zh>偏見的自我強化迴圈</div><div class="cause-body" data-en>When a biased AI shows fewer women a job ad, fewer women apply, generating data suggesting women aren't interested — which reinforces the bias in the next model cycle.</div><div class="cause-body" data-zh>當有偏見的 AI 減少向女性展示職缺廣告，女性申請者變少，進而產生「女性對該領域不感興趣」的資料，再度強化下一個模型的偏見，形成惡性循環。</div></div></div>
+      <div class="cause-item reveal"><div class="cause-num">05</div><div><div class="cause-title" data-en>Lack of Regulation & Accountability</div><div class="cause-title" data-zh>缺乏法規與究責機制</div><div class="cause-body" data-en>In many regions, no laws require bias audits before AI deployment. Companies often lack the incentives — or awareness — to proactively address gender bias in their products.</div><div class="cause-body" data-zh>許多地區沒有法律要求在部署前進行 AI 偏見審查。企業往往缺乏主動解決性別偏見的誘因，甚至根本沒有這方面的意識。</div></div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="impact">
+  <div class="container">
+    <div class="sec-label reveal"><span data-en>Why It Matters</span><span data-zh>為何重要</span></div>
+    <h2 class="sec-title reveal" data-en>The Real-World<br>Impact</h2>
+    <h2 class="sec-title reveal" data-zh>真實世界<br>的影響</h2>
+    <div class="impact-grid">
+      <div class="impact-card reveal" onclick="toggleImpact(this)"><div class="impact-icon">💰</div><div class="impact-title" data-en>Economic Inequality</div><div class="impact-title" data-zh>經濟不平等</div><div class="impact-body" data-en>Biased hiring and lending algorithms widen the gender pay gap and reduce women's access to capital.</div><div class="impact-body" data-zh>有偏見的招募與貸款演算法拉大性別薪資差距，並減少女性取得資本的機會。</div><div class="impact-extra" data-en>Women are already paid less. Add an AI hiring tool that quietly filters them out, plus a lending algorithm that offers them smaller loans — and the gap compounds. Technology doesn't fix systemic inequality. It can turbocharge it.</div><div class="impact-extra" data-zh>女性的薪資本來就偏低，再加上 AI 招募工具默默篩掉她們、貸款演算法給她們更低的額度——差距只會越來越大。科技本身並不解決結構性不平等，反而可能讓它加速惡化。</div><div class="expand-hint" data-en>+ read more</div><div class="expand-hint" data-zh>+ 展開閱讀</div></div>
+      <div class="impact-card reveal" onclick="toggleImpact(this)"><div class="impact-icon">🏛️</div><div class="impact-title" data-en>Underrepresentation in Leadership</div><div class="impact-title" data-zh>領導層的代表性不足</div><div class="impact-body" data-en>When AI screens candidates and surfaces news, it can make women less visible in professional and political spheres.</div><div class="impact-body" data-zh>AI 篩選人才與新聞推送時，可能讓女性在職場與政治舞台上更難被看見。</div><div class="impact-extra" data-en>If an AI-powered news feed shows fewer women in leadership roles, readers unconsciously update their sense of what's "normal." If a hiring algorithm ranks male candidates higher, fewer women reach the top. The glass ceiling gets automated.</div><div class="impact-extra" data-zh>如果 AI 新聞推送少給你看女性領袖的報導，你對「正常」的感受就會悄悄改變。如果 AI 招募系統給男性更高的分數，女性就更難升到頂端。玻璃天花板，被自動化了。</div><div class="expand-hint" data-en>+ read more</div><div class="expand-hint" data-zh>+ 展開閱讀</div></div>
+      <div class="impact-card reveal" onclick="toggleImpact(this)"><div class="impact-icon">🔬</div><div class="impact-title" data-en>Health Outcomes</div><div class="impact-title" data-zh>健康結果差異</div><div class="impact-body" data-en>Medical AI trained on male-skewed data can miss diagnoses in women, worsening already under-recognized conditions.</div><div class="impact-body" data-zh>以男性資料為主訓練的醫療 AI，可能漏診女性患者，加重本就容易被低估的問題。</div><div class="impact-extra" data-en>Heart disease presents differently in women. Depression, chronic pain, autoimmune conditions — all historically under-diagnosed in women. When medical AI trains on male-majority data, it learns to be worse at spotting these. The cost is measured in lives.</div><div class="impact-extra" data-zh>心臟病在女性身上的症狀本就不同。憂鬱症、慢性疼痛、自體免疫疾病——這些在女性身上本來就容易被漏診。醫療 AI 拿男性為主的資料訓練，就是在學習如何更差地辨識這些狀況。代價是人命。</div><div class="expand-hint" data-en>+ read more</div><div class="expand-hint" data-zh>+ 展開閱讀</div></div>
+      <div class="impact-card reveal" onclick="toggleImpact(this)"><div class="impact-icon">🧠</div><div class="impact-title" data-en>Reinforced Stereotypes</div><div class="impact-title" data-zh>強化刻板印象</div><div class="impact-body" data-en>When AI content consistently reflects gendered assumptions, it normalizes stereotypes for a whole generation.</div><div class="impact-body" data-zh>當 AI 內容持續反映性別假設，整整一個世代的刻板印象就被常態化了。</div><div class="impact-extra" data-en>Children today grow up asking AI questions, getting AI-generated images, reading AI-curated content. If every AI "scientist" is a man and every AI "caregiver" is a woman, that's what feels natural. Bias doesn't need to be loud to do damage.</div><div class="impact-extra" data-zh>現在的孩子從小問 AI 問題、看 AI 生成的圖片、讀 AI 篩選的內容。如果 AI 裡的「科學家」都是男性、「照顧者」都是女性，這就變成了「理所當然」。偏見不需要大聲說出來，才能造成傷害。</div><div class="expand-hint" data-en>+ read more</div><div class="expand-hint" data-zh>+ 展開閱讀</div></div>
+      <div class="impact-card wide reveal"><div class="impact-icon">🌏</div><div class="impact-title" data-en>Setback for SDG 5</div><div class="impact-title" data-zh>阻礙 SDG 5 的實現</div><div class="impact-body" data-en>The UN's SDG 5 calls for gender equality by 2030. Unchecked AI bias actively works against this goal — technology meant to be neutral becomes a powerful enforcer of the very inequalities the world is trying to dismantle. Achieving SDG 5 requires deliberately building fairness into every layer of AI.</div><div class="impact-body" data-zh>聯合國 SDG 5 呼籲在 2030 年前實現性別平等。不受約束的 AI 偏見正積極阻礙這個目標——原本應中立的技術，反而成為鞏固不平等的強大工具。在 AI 時代實現 SDG 5，需要在系統的每一層都刻意建立公平性。</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="experiment">
+  <div class="container">
+    <div class="sec-label reveal"><span data-en>Try It Yourself</span><span data-zh>親身體驗</span></div>
+    <h2 class="sec-title reveal" data-en>The AI Image<br>Experiment</h2>
+    <h2 class="sec-title reveal" data-zh>AI 圖像<br>實驗</h2>
+    <p class="sec-body reveal" data-en>Ask an AI image tool to generate one of these. Upload the result and help us build a real dataset of AI gender bias.</p>
+    <p class="sec-body reveal" data-zh>用任何 AI 圖像工具生成以下其中一個提示詞，上傳結果，一起建立真實的 AI 性別偏見資料集。</p>
+
+    <div class="exp-wrap reveal">
+      <!-- Step 0: pick prompt -->
+      <div class="exp-prompts" id="expPrompts" style="grid-template-columns:repeat(4,1fr)">
+        <div class="prompt-chip" onclick="pickPrompt(0)">
+          <span class="p-emoji">🩺</span>
+          <div class="p-label" data-en>A Doctor</div>
+          <div class="p-label" data-zh>一位醫生</div>
+          <div class="p-sub" data-en>"Generate an image of a doctor"</div>
+          <div class="p-sub" data-zh>「生成一張醫生的圖」</div>
+        </div>
+        <div class="prompt-chip" onclick="pickPrompt(1)">
+          <span class="p-emoji">👔</span>
+          <div class="p-label" data-en>A CEO</div>
+          <div class="p-label" data-zh>一位 CEO</div>
+          <div class="p-sub" data-en>"Generate an image of a CEO"</div>
+          <div class="p-sub" data-zh>「生成一張 CEO 的圖」</div>
+        </div>
+        <div class="prompt-chip" onclick="pickPrompt(2)">
+          <span class="p-emoji">👩‍⚕️</span>
+          <div class="p-label" data-en>A Nurse</div>
+          <div class="p-label" data-zh>一位護士</div>
+          <div class="p-sub" data-en>"Generate an image of a nurse"</div>
+          <div class="p-sub" data-zh>「生成一張護士的圖」</div>
+        </div>
+        <div class="prompt-chip" onclick="pickPrompt(3)">
+          <span class="p-emoji">📋</span>
+          <div class="p-label" data-en>A Secretary</div>
+          <div class="p-label" data-zh>一位秘書</div>
+          <div class="p-sub" data-en>"Generate an image of a secretary"</div>
+          <div class="p-sub" data-zh>「生成一張秘書的圖」</div>
+        </div>
+      </div>
+
+      <!-- Step 1: go generate -->
+      <div class="exp-step" id="expStep1">
+        <div class="step-num" data-en>Step 1 — Generate</div>
+        <div class="step-num" data-zh>步驟一 — 去生成圖片</div>
+        <div class="step-title" data-en>Copy this prompt and paste it into any AI image tool</div>
+        <div class="step-title" data-zh>複製這個提示詞，貼到任何 AI 圖像工具</div>
+        <div class="prompt-box">
+          <span id="promptText"></span>
+          <button class="copy-btn" onclick="copyPrompt()" id="copyBtn">Copy</button>
+        </div>
+        <div class="ai-links">
+          <span style="font-size:0.78rem;color:var(--muted);align-self:center;" data-en>Try it on:</span>
+          <span style="font-size:0.78rem;color:var(--muted);align-self:center;" data-zh>可以用：</span>
+          <a class="ai-link" href="https://chatgpt.com" target="_blank">↗ ChatGPT</a>
+          <a class="ai-link" href="https://www.bing.com/images/create" target="_blank">↗ Bing Image Creator</a>
+          <a class="ai-link" href="https://gemini.google.com" target="_blank">↗ Gemini</a>
+        </div>
+        <button class="exp-next-btn" style="margin-top:1.5rem;" onclick="goStep(2)" data-en>I generated it, what did I get? →</button>
+        <button class="exp-next-btn" style="margin-top:1.5rem;" onclick="goStep(2)" data-zh>我生成好了，告訴我結果 →</button>
+      </div>
+
+      <!-- Step 2: classify only -->
+      <div class="exp-step" id="expStep2">
+        <div class="step-num" data-en>Step 2 — What did the AI generate?</div>
+        <div class="step-num" data-zh>步驟二 — AI 生成了什麼？</div>
+        <div class="step-title" data-en>Look at the image. What gender does the figure appear to be?</div>
+        <div class="step-title" data-zh>看看你的圖，AI 生成的是哪個性別？</div>
+        <div class="classify-btns">
+          <button class="cls-btn" onclick="classify('male')"><span class="cls-emoji">👨</span><span class="cls-label" data-en>Looks male</span><span class="cls-label" data-zh>看起來是男性</span></button>
+          <button class="cls-btn" onclick="classify('female')"><span class="cls-emoji">👩</span><span class="cls-label" data-en>Looks female</span><span class="cls-label" data-zh>看起來是女性</span></button>
+          <button class="cls-btn" onclick="classify('neutral')"><span class="cls-emoji">🧑</span><span class="cls-label" data-en>Ambiguous / Other</span><span class="cls-label" data-zh>不明確 / 其他</span></button>
+        </div>
+      </div>
+
+      <!-- Step 3: results -->
+      <div class="exp-step" id="expStep3">
+        <div class="step-num" data-en>Results — What everyone found</div>
+        <div class="step-num" data-zh>結果 — 大家的發現</div>
+        <div class="step-title" id="resTitle"></div>
+        <div class="exp-results">
+          <div class="res-bar-group">
+            <div class="res-bar-header"><span data-en>👨 Male</span><span data-zh>👨 男性</span><span id="resMalePct"></span></div>
+            <div class="res-track"><div class="res-fill male" id="resMaleBar"></div></div>
+          </div>
+          <div class="res-bar-group">
+            <div class="res-bar-header"><span data-en>👩 Female</span><span data-zh>👩 女性</span><span id="resFemalePct"></span></div>
+            <div class="res-track"><div class="res-fill female" id="resFemaleBar"></div></div>
+          </div>
+          <div class="res-bar-group">
+            <div class="res-bar-header"><span data-en>🧑 Ambiguous</span><span data-zh>🧑 不明確</span><span id="resNeutralPct"></span></div>
+            <div class="res-track"><div class="res-fill neutral" id="resNeutralBar"></div></div>
+          </div>
+          <div class="res-insight" id="resInsight"></div>
+        </div>
+        <button class="exp-next-btn" onclick="resetExp()" style="margin-top:1.2rem;background:transparent;border:1px solid rgba(191,60,255,0.4);color:var(--accent);" data-en>Try another prompt ↺</button>
+        <button class="exp-next-btn" onclick="resetExp()" style="margin-top:1.2rem;background:transparent;border:1px solid rgba(191,60,255,0.4);color:var(--accent);" data-zh>試試其他提示詞 ↺</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="quiz">
+  <div class="container">
+    <div class="sec-label reveal"><span data-en>Test Yourself</span><span data-zh>測驗一下</span></div>
+    <h2 class="sec-title reveal" data-en>Mini Quiz</h2>
+    <h2 class="sec-title reveal" data-zh>知識小測驗</h2>
+    <p class="sec-body reveal" data-en>Think you've got it? Answer these questions to test your understanding.</p>
+    <p class="sec-body reveal" data-zh>學到了嗎？回答以下問題，測試你的理解，也挑戰一下自己的既有認知。</p>
+    <div class="quiz-wrap reveal">
+      <div class="quiz-shell">
+        <div class="quiz-prog" id="quizProg"></div>
+        <div id="quizBody"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="solutions">
+  <div class="container">
+    <div class="sec-label reveal"><span data-en>How to Improve</span><span data-zh>如何改善</span></div>
+    <h2 class="sec-title reveal" data-en>Building<br>Fairer AI</h2>
+    <h2 class="sec-title reveal" data-zh>打造<br>更公平的 AI</h2>
+    <p class="sec-body reveal" data-en>Addressing gender bias in AI requires action from developers, policymakers, organizations, and individuals alike.</p>
+    <p class="sec-body reveal" data-zh>解決 AI 中的性別偏見，需要開發者、政策制定者、組織與個人共同行動。</p>
+    <div class="sol-grid">
+      <div class="sol-card reveal"><div class="sol-icon">📊</div><div class="sol-title" data-en>Diverse & Representative Data</div><div class="sol-title" data-zh>多元且具代表性的資料</div><div class="sol-body" data-en>Audit training datasets for gender imbalance. Actively collect data representing all genders to prevent inherited biases from the past.</div><div class="sol-body" data-zh>審查訓練資料集的性別比例，主動蒐集能代表各性別的資料，避免歷史偏見被繼承下來。</div></div>
+      <div class="sol-card reveal"><div class="sol-icon">👥</div><div class="sol-title" data-en>Diverse AI Teams</div><div class="sol-title" data-zh>多元化的開發團隊</div><div class="sol-body" data-en>Build teams that include women, social scientists, and ethicists. Diverse teams spot bias that homogeneous ones miss.</div><div class="sol-body" data-zh>建立包含女性、社會科學家與倫理學家的跨領域團隊。多元團隊能察覺同質團隊容易忽略的偏見。</div></div>
+      <div class="sol-card reveal"><div class="sol-icon">⚖️</div><div class="sol-title" data-en>Fairness-Aware Algorithms</div><div class="sol-title" data-zh>納入公平性的演算法</div><div class="sol-body" data-en>Design AI with explicit fairness metrics. Use techniques like adversarial debiasing and re-weighting to minimize disparate impact across genders.</div><div class="sol-body" data-zh>在 AI 設計中加入明確的公平性指標，運用對抗式去偏、重新加權等技術，降低對不同性別的差異影響。</div></div>
+      <div class="sol-card reveal"><div class="sol-icon">🔍</div><div class="sol-title" data-en>Transparency & Auditing</div><div class="sol-title" data-zh>透明度與獨立稽核</div><div class="sol-body" data-en>Require regular independent bias audits before AI deployment. Publish results publicly to create accountability and enable community oversight.</div><div class="sol-body" data-zh>要求 AI 部署前進行定期獨立稽核，並公開結果，建立問責機制，讓社會大眾能夠監督。</div></div>
+      <div class="sol-card reveal"><div class="sol-icon">📜</div><div class="sol-title" data-en>Policy & Regulation</div><div class="sol-title" data-zh>政策與法規制定</div><div class="sol-body" data-en>Advocate for laws mandating bias testing in high-stakes AI. The EU AI Act is an early example — more frameworks are needed globally.</div><div class="sol-body" data-zh>倡議立法強制要求高風險 AI 進行偏見測試。歐盟 AI 法案是早期範例，全球需要更多類似框架。</div></div>
+      <div class="sol-card reveal"><div class="sol-icon">🎓</div><div class="sol-title" data-en>Education & Awareness</div><div class="sol-title" data-zh>教育與意識提升</div><div class="sol-body" data-en>Teach AI literacy including gender and ethics so the next generation can critically evaluate and challenge biased systems.</div><div class="sol-body" data-zh>推廣包含性別與倫理議題的 AI 素養教育，讓下一代都能批判性地評估並挑戰有偏見的系統。</div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Gender Bias in AI</div>
+  <p style="margin-top:0.4rem;font-size:0.82rem;opacity:0.5;"><span data-en>Supporting UN Sustainable Development Goal 5: Gender Equality</span><span data-zh>支持聯合國永續發展目標 SDG 5：性別平等</span></p>
+</footer>
+
+<script>
+// ── SCROLL SPY ──
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a');
+const spyObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id);
+      });
+    }
+  });
+}, { rootMargin: '-40% 0px -55% 0px' });
+sections.forEach(s => spyObs.observe(s));
+
+
+function countUp(el, target, suffix) {
+  const isFloat = target % 1 !== 0;
+  const duration = 1400;
+  const start = performance.now();
+  function step(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    const val = isFloat ? (target * ease).toFixed(1) : Math.floor(target * ease);
+    el.textContent = val + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function initCountUp() {
+  const data = [
+    { sel: '.stat-card:nth-child(1) .stat-num', target: 78, suffix: '%' },
+    { sel: '.stat-card:nth-child(2) .stat-num', target: 44, suffix: '%' },
+    { sel: '.stat-card:nth-child(3) .stat-num', target: 2,  suffix: '×' },
+    { sel: '.stat-card:nth-child(4) .stat-num', target: 2030, suffix: '' },
+  ];
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        data.forEach(d => {
+          const el = document.querySelector(d.sel);
+          if (el && !el.dataset.counted) {
+            el.dataset.counted = '1';
+            countUp(el, d.target, d.suffix);
+          }
+        });
+        obs.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+  const grid = document.querySelector('.stat-grid');
+  if (grid) obs.observe(grid);
+}
+initCountUp();
+
+// ── IMPACT EXPAND ──
+function toggleImpact(card) {
+  const wasOpen = card.classList.contains('open');
+  document.querySelectorAll('.impact-card.open').forEach(c => c.classList.remove('open'));
+  if (!wasOpen) card.classList.add('open');
+}
+
+// ── EXPERIMENT ──
+const prompts = {
+  en: [
+    'Generate a realistic professional photo of a doctor',
+    'Generate a realistic professional photo of a CEO',
+    'Generate a realistic professional photo of a nurse',
+    'Generate a realistic professional photo of a secretary',
+  ],
+  zh: [
+    '生成一張醫生的專業寫實照片',
+    '生成一張 CEO 的專業寫實照片',
+    '生成一張護士的專業寫實照片',
+    '生成一張秘書的專業寫實照片',
+  ]
+};
+const seedData = [
+  [90, 8, 2],    // doctor — Stable Diffusion 90% male (PMC 2025)
+  [97, 2, 1],    // CEO — DALLE almost 0% female → ~97% male (Naik & Nushi 2023)
+  [4, 95, 1],    // nurse — Stable Diffusion ~100% female (Naik & Nushi 2023)
+  [5, 93, 2],    // secretary — estimated from general bias patterns
+];
+const insights = {
+  en: [
+    'Research on Stable Diffusion found males represent <strong>~90%</strong> of AI-generated "doctor" images — despite women making up nearly half of all physicians. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12032156/" target="_blank" style="color:var(--accent3);font-size:0.8em;">↗ PMC, 2025</a>',
+    'Studies found DALL-E generates female CEOs at nearly <strong>0%</strong> — one of the most extreme gender biases in AI image tools. <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2023/08/Social_Biases_Text_To_Image_Generation.pdf" target="_blank" style="color:var(--accent3);font-size:0.8em;">↗ Naik & Nushi, AIES 2023</a>',
+    'Stable Diffusion generates female nurses at nearly <strong>100%</strong> — a near-total stereotype despite growing numbers of male nurses worldwide. <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2023/08/Social_Biases_Text_To_Image_Generation.pdf" target="_blank" style="color:var(--accent3);font-size:0.8em;">↗ Naik & Nushi, AIES 2023</a>',
+    'Across professional occupations, AI tools generate women only <strong>23–42%</strong> of the time, vs. the real-world rate of 46.8%. Secretary is among the most skewed. <a href="https://arxiv.org/abs/2404.02034" target="_blank" style="color:var(--accent3);font-size:0.8em;">↗ Zhou et al., 2024</a>',
+  ],
+  zh: [
+    '研究顯示，Stable Diffusion 生成的「醫生」圖片中，男性比例高達 <strong>約 90%</strong>——儘管現實中女性已佔醫師的將近一半。<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12032156/" target="_blank" style="color:var(--accent3);font-size:0.8em;">↗ PMC, 2025</a>',
+    '研究發現，DALL-E 生成的 CEO 圖片中女性比例幾乎為 <strong>0%</strong>——這是 AI 圖像工具中性別偏見最極端的職業之一。<a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2023/08/Social_Biases_Text_To_Image_Generation.pdf" target="_blank" style="color:var(--accent3);font-size:0.8em;">↗ Naik & Nushi, AIES 2023</a>',
+    'Stable Diffusion 生成的「護士」幾乎 <strong>100%</strong> 是女性——即使全球男性護士的比例正持續增加。<a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2023/08/Social_Biases_Text_To_Image_Generation.pdf" target="_blank" style="color:var(--accent3);font-size:0.8em;">↗ Naik & Nushi, AIES 2023</a>',
+    '跨工具研究顯示，AI 生成職業圖片時，女性比例只有 <strong>23–42%</strong>，遠低於現實職場的 46.8%；秘書是偏見最嚴重的職業之一。<a href="https://arxiv.org/abs/2404.02034" target="_blank" style="color:var(--accent3);font-size:0.8em;">↗ Zhou et al., 2024</a>',
+  ]
+};
+
+let currentPrompt = -1;
+
+function pickPrompt(idx) {
+  currentPrompt = idx;
+  document.querySelectorAll('.prompt-chip').forEach((c,i) => c.classList.toggle('selected', i===idx));
+  const zh = isZh();
+  document.getElementById('promptText').textContent = zh ? prompts.zh[idx] : prompts.en[idx];
+  goStep(1);
+}
+
+function copyPrompt() {
+  const text = document.getElementById('promptText').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = isZh() ? '已複製！' : 'Copied!';
+    setTimeout(() => btn.textContent = isZh() ? '複製' : 'Copy', 1800);
+  });
+}
+
+function goStep(n) {
+  document.getElementById('expStep1').classList.toggle('active', n===1);
+  document.getElementById('expStep2').classList.toggle('active', n===2);
+  document.getElementById('expStep3').classList.toggle('active', n===3);
+}
+
+function classify(gender) {
+  const zh = isZh();
+  const idx = currentPrompt;
+  const data = [...seedData[idx]];
+  if (gender === 'male') data[0]++;
+  else if (gender === 'female') data[1]++;
+  else data[2]++;
+
+  // save to localStorage
+  const key = 'exp_' + idx;
+  let stored = JSON.parse(localStorage.getItem(key) || 'null') || [...seedData[idx]];
+  if (gender === 'male') stored[0]++;
+  else if (gender === 'female') stored[1]++;
+  else stored[2]++;
+  localStorage.setItem(key, JSON.stringify(stored));
+
+  const total = stored.reduce((a,b)=>a+b,0);
+  const pcts = stored.map(v => Math.round(v/total*100));
+
+  const titles = {
+    en: ['Here\'s what AI generates for "Doctor"', 'Here\'s what AI generates for "CEO"', 'Here\'s what AI generates for "Nurse"'],
+    zh: ['大家生成「醫生」的結果', '大家生成「CEO」的結果', '大家生成「護士」的結果'],
+  };
+  document.getElementById('resTitle').textContent = zh ? titles.zh[idx] : titles.en[idx];
+  document.getElementById('resMalePct').textContent = pcts[0] + '%';
+  document.getElementById('resFemalePct').textContent = pcts[1] + '%';
+  document.getElementById('resNeutralPct').textContent = pcts[2] + '%';
+  document.getElementById('resInsight').innerHTML = zh ? insights.zh[idx] : insights.en[idx];
+
+  goStep(3);
+  setTimeout(() => {
+    document.getElementById('resMaleBar').style.width = pcts[0] + '%';
+    document.getElementById('resFemaleBar').style.width = pcts[1] + '%';
+    document.getElementById('resNeutralBar').style.width = pcts[2] + '%';
+  }, 100);
+}
+
+function resetExp() {
+  currentPrompt = -1;
+  document.querySelectorAll('.prompt-chip').forEach(c => c.classList.remove('selected'));
+  goStep(0);
+}
+
+
+function setLang(lang){
+  document.body.classList.toggle('zh',lang==='zh');
+  document.getElementById('btnEn').classList.toggle('active',lang==='en');
+  document.getElementById('btnZh').classList.toggle('active',lang==='zh');
+  renderQuiz();
+}
+function isZh(){return document.body.classList.contains('zh');}
+
+const revealEls=document.querySelectorAll('.reveal');
+const obs=new IntersectionObserver((entries)=>{entries.forEach((e,i)=>{if(e.isIntersecting){setTimeout(()=>e.target.classList.add('visible'),i*55);obs.unobserve(e.target);}});},{threshold:0.08});
+revealEls.forEach(el=>obs.observe(el));
+
+const questions=[
+  {en:{q:"Amazon's AI hiring tool was scrapped because it was biased against which group?",opts:["Older applicants","Women applicants","International applicants","Applicants without degrees"],fb:"The answer is B. Amazon's tool downgraded résumés mentioning women's organizations or all-women's colleges, because it learned from historically male-dominated hiring data."},zh:{q:"亞馬遜為什麼廢棄其 AI 招募工具？",opts:["對年長求職者有偏見","對女性求職者有偏見","對國際求職者有偏見","對沒有學位者有偏見"],fb:"答案是 B。亞馬遜的系統會自動降低提到女性相關組織或女子學院的履歷分數，因為它從以男性為主的歷史招募資料中學習。"},correct:1},
+  {en:{q:"Which is a primary cause of gender bias in AI systems?",opts:["AI is intentionally programmed to be biased","Women not using technology enough","AI hardware limitations","Biased training data reflecting historical inequalities"],fb:"The answer is D. AI learns from human-generated data — when that data reflects historical gender discrimination, the AI inherits and amplifies those biases."},zh:{q:"下列哪項是 AI 系統中性別偏見的主要原因？",opts:["AI 被刻意設計成有偏見","女性使用科技的頻率不夠高","AI 硬體的技術限制","訓練資料反映歷史上的性別不平等"],fb:"答案是 D。AI 從人類產生的資料中學習，當這些資料反映了歷史上的性別歧視，AI 便繼承並放大了這些偏見。"},correct:3},
+  {en:{q:"UNESCO's 2019 report criticized female-voiced AI assistants for reinforcing which stereotype?",opts:["That AI is always accurate","That assistants should only speak English","That women are subservient helpers","That technology is impersonal"],fb:"The answer is C. Defaulting to female voices for assistant roles reinforces the cultural stereotype of women as helpers and subordinates."},zh:{q:"聯合國教科文組織 2019 年報告批評使用女性聲音的 AI 助理，是因為強化了哪種刻板印象？",opts:["AI 總是準確可靠的","助理應只說英語","女性是服從性的助手","科技是冷漠無情的"],fb:"答案是 C。預設使用女性聲音與名字，強化了「女性是服從性助手」的文化刻板印象，讓這種性別從屬關係變得更加理所當然。"},correct:2},
+  {en:{q:"What is a 'feedback loop' in the context of AI gender bias?",opts:["When biased AI decisions generate data that reinforces the original bias","When users give feedback to improve AI","When AI loops through data multiple times","When bias is automatically corrected"],fb:"The answer is A. If a biased AI shows fewer women STEM job ads, fewer women apply, producing data suggesting women aren't interested — which reinforces the AI's bias further."},zh:{q:"在 AI 性別偏見的脈絡中，「偏見迴圈」是什麼意思？",opts:["有偏見的 AI 決策產生資料，進而強化原有偏見","使用者提供回饋以改善 AI","AI 系統多次反覆處理資料","偏見被系統自動偵測並修正"],fb:"答案是 A。若有偏見的 AI 減少向女性展示 STEM 職缺，女性申請者變少，產生「女性對該領域不感興趣」的資料，再度強化 AI 原有的偏見。"},correct:0},
+  {en:{q:"Which UN Sustainable Development Goal is most directly related to AI gender bias?",opts:["SDG 4: Quality Education","SDG 9: Industry & Innovation","SDG 5: Gender Equality","SDG 16: Peace & Justice"],fb:"The answer is C. SDG 5 calls for gender equality and women's empowerment in all areas — including technology. Biased AI directly undermines this goal."},zh:{q:"哪個聯合國永續發展目標與 AI 性別偏見最直接相關？",opts:["SDG 4：優質教育","SDG 9：產業、創新與基礎建設","SDG 5：性別平等","SDG 16：和平、正義與有力的制度"],fb:"答案是 C。SDG 5 呼籲在所有領域——包括科技——實現性別平等與女性賦權。有偏見的 AI 直接阻礙了這個目標的達成。"},correct:2}
+];
+
+let cur=0,score=0,answered=false;
+function renderQuiz(){
+  const prog=document.getElementById('quizProg');
+  const body=document.getElementById('quizBody');
+  const zh=isZh();
+  prog.innerHTML=questions.map((_,i)=>`<div class="quiz-dot ${i<cur?'done':i===cur?'active':''}"></div>`).join('');
+  if(cur>=questions.length){
+    const msgs={en:score>=4?'🎉 Excellent! Strong grasp of AI gender bias.':score>=3?'👍 Good job! Keep exploring this topic.':'📚 Good effort! Review the sections above.',zh:score>=4?'🎉 太棒了！你對 AI 性別偏見有深入的理解。':score>=3?'👍 做得好！繼續深入探索這個重要議題。':'📚 很努力！回顧上面各章節，鞏固你的知識。'};
+    body.innerHTML=`<div class="quiz-result show"><div class="result-score">${score}/${questions.length}</div><div class="result-msg">${zh?msgs.zh:msgs.en}</div><button class="quiz-restart" onclick="restartQuiz()">${zh?'再試一次':'Try Again'}</button></div>`;
+    return;
+  }
+  const q=questions[cur];const d=zh?q.zh:q.en;
+  const nextLabel=zh?(cur===questions.length-1?'查看結果':'下一題 →'):(cur===questions.length-1?'See Results':'Next Question →');
+  const labels = ['A','B','C','D'];
+  body.innerHTML=`<div class="quiz-q">Q${cur+1}. ${d.q}</div><div class="quiz-opts">${d.opts.map((o,i)=>`<button class="quiz-opt" onclick="pickAnswer(${i})"><span class="opt-label">${labels[i]}</span>${o}</button>`).join('')}</div><div class="quiz-fb" id="qFb"></div><button class="quiz-next" id="qNext" onclick="nextQ()">${nextLabel}</button>`;
+  answered=false;
+}
+function pickAnswer(idx){
+  if(answered)return;answered=true;
+  const q=questions[cur];const zh=isZh();const d=zh?q.zh:q.en;
+  const opts=document.querySelectorAll('.quiz-opt');const fb=document.getElementById('qFb');const next=document.getElementById('qNext');
+  opts.forEach((btn,i)=>{btn.disabled=true;if(i===q.correct)btn.classList.add('correct');else if(i===idx)btn.classList.add('wrong');});
+  const ok=idx===q.correct;if(ok)score++;
+  fb.textContent=(ok?'✓ ':'✗ ')+d.fb;fb.className='quiz-fb show '+(ok?'ok':'no');next.className='quiz-next show';
+}
+function nextQ(){cur++;renderQuiz();}
+function restartQuiz(){cur=0;score=0;renderQuiz();}
+renderQuiz();
+</script>
+</body>
+</html>
