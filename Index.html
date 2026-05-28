@@ -227,7 +227,14 @@ body.zh span[data-en]{display:none!important;}
 body:not(.zh) span[data-zh]{display:none!important;}
 
 @media(max-width:900px){nav{padding:1rem 1.5rem;}.nav-links{display:none;}.intro-layout,.ex-grid,.sol-grid{grid-template-columns:1fr;}.impact-grid{grid-template-columns:1fr 1fr;}.impact-card.wide{grid-column:span 2;}}
-@media(max-width:600px){.impact-grid{grid-template-columns:1fr;}.impact-card.wide{grid-column:span 1;}.cause-item{grid-template-columns:60px 1fr;}.cause-num{font-size:2.5rem;padding-left:0.5rem;}}
+@media(max-width:600px){.impact-grid{grid-template-columns:1fr;}.impact-card.wide{grid-column:span 1;}.cause-item{grid-template-columns:60px 1fr;}.cause-num{font-size:2.5rem;padding-left:0.5rem;}
+/* Mobile: tap to flip, disable hover flip */
+.flip-card:hover .flip-inner{transform:none;}
+.flip-card.flipped .flip-inner{transform:rotateY(180deg);}
+.flip-card:hover .flip-front{border-color:var(--border);}
+/* Prompt grid 2x2 on mobile */
+#expPrompts{grid-template-columns:repeat(2,1fr) !important;}
+}
 </style>
 </head>
 <body>
@@ -516,7 +523,15 @@ body:not(.zh) span[data-zh]{display:none!important;}
 </footer>
 
 <script>
-// ── SCROLL SPY ──
+// ── FLIP CARDS: tap on mobile, hover on desktop ──
+document.querySelectorAll('.flip-card').forEach(card => {
+  card.addEventListener('click', () => {
+    if (window.innerWidth <= 600) {
+      card.classList.toggle('flipped');
+    }
+  });
+});
+
 const sections = document.querySelectorAll('section[id]');
 const navLinks = document.querySelectorAll('.nav-links a');
 const spyObs = new IntersectionObserver((entries) => {
